@@ -88,10 +88,9 @@ fragment main0_out main0(main0_in in [[stage_in]], constant spvDescriptorSetBuff
     constant uint* spvDescriptorSet0_uSampler0Swzl = &spvDescriptorSet0.spvSwizzleConstants[0];
     constant uint& uSampler1Swzl = spvSwizzleConstants[0];
     out.FragColor = spvTextureSwizzle(spvDescriptorSet0.uSampler0[2].sample(spvDescriptorSet0.uSampler0Smplr[2], in.vUV), spvDescriptorSet0_uSampler0Swzl[2]);
-    float4 _71 = spvTextureSwizzle(uSampler1.sample(uSampler1Smplr, in.vUV), uSampler1Swzl);
-    out.FragColor += _71;
+    out.FragColor += spvTextureSwizzle(uSampler1.sample(uSampler1Smplr, in.vUV), uSampler1Swzl);
     out.FragColor += spvTextureSwizzle(spvDescriptorSet0.uSampler0[1].sample(spvDescriptorSet0.uSampler0Smplr[1], in.vUV), spvDescriptorSet0_uSampler0Swzl[1]);
-    out.FragColor += _71;
+    out.FragColor += spvTextureSwizzle(uSampler1.sample(uSampler1Smplr, in.vUV), uSampler1Swzl);
     return out;
 }
 

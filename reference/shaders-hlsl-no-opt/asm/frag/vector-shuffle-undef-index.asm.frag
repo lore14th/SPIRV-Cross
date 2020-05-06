@@ -11,7 +11,7 @@ struct SPIRV_Cross_Output
     float4 FragColor : SV_Target0;
 };
 
-static float4 undef;
+float4 undef;
 
 void frag_main()
 {
