@@ -1,4 +1,4 @@
-project "spirvCross"
+project "SPIRV-Cross"
 	kind "StaticLib"
 	language "C"
 	staticruntime "on"
