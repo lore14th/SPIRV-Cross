@@ -268,7 +268,10 @@ public:
 		uint32_t dynamic_offsets_buffer_index = 23;
 		uint32_t shader_input_wg_index = 0;
 		uint32_t device_index = 0;
+		uint32_t enable_frag_output_mask = 0xffffffff;
 		bool enable_point_size_builtin = true;
+		bool enable_frag_depth_builtin = true;
+		bool enable_frag_stencil_ref_builtin = true;
 		bool disable_rasterization = false;
 		bool capture_output_to_buffer = false;
 		bool swizzle_texture_samples = false;
@@ -312,12 +315,21 @@ public:
 		// and would otherwise declare a different IAB.
 		bool force_active_argument_buffer_resources = false;
 
-		bool is_ios()
+		// Forces the use of plain arrays, which works around certain driver bugs on certain versions
+		// of Intel Macbooks. See https://github.com/KhronosGroup/SPIRV-Cross/issues/1210.
+		// May reduce performance in scenarios where arrays are copied around as value-types.
+		bool force_native_arrays = false;
+
+		// If a shader writes clip distance, also emit user varyings which
+		// can be read in subsequent stages.
+		bool enable_clip_distance_user_varying = true;
+
+		bool is_ios() const
 		{
 			return platform == iOS;
 		}
 
-		bool is_macos()
+		bool is_macos() const
 		{
 			return platform == macOS;
 		}
@@ -614,6 +626,7 @@ protected:
 	                             uint32_t grad_y, uint32_t lod, uint32_t coffset, uint32_t offset, uint32_t bias,
 	                             uint32_t comp, uint32_t sample, uint32_t minlod, bool *p_forward) override;
 	std::string to_initializer_expression(const SPIRVariable &var) override;
+	std::string to_zero_initialized_expression(uint32_t type_id) override;
 
 	std::string unpack_expression_type(std::string expr_str, const SPIRType &type, uint32_t physical_type_id,
 	                                   bool is_packed, bool row_major) override;
@@ -622,6 +635,7 @@ protected:
 	bool builtin_translates_to_nonarray(spv::BuiltIn builtin) const override;
 
 	std::string bitcast_glsl_op(const SPIRType &result_type, const SPIRType &argument_type) override;
+	bool emit_complex_bitcast(uint32_t result_id, uint32_t id, uint32_t op0) override;
 	bool skip_argument(uint32_t id) const override;
 	std::string to_member_reference(uint32_t base, const SPIRType &type, uint32_t index, bool ptr_chain) override;
 	std::string to_qualifiers_glsl(uint32_t id) override;
@@ -827,7 +841,10 @@ protected:
 
 	bool has_sampled_images = false;
 	bool builtin_declaration = false; // Handle HLSL-style 0-based vertex/instance index.
-	bool use_builtin_array = false; // Force the use of C style array declaration.
+
+	bool is_using_builtin_array = false; // Force the use of C style array declaration.
+	bool using_builtin_array() const;
+
 	bool is_rasterization_disabled = false;
 	bool capture_output_to_buffer = false;
 	bool needs_swizzle_buffer_def = false;
@@ -861,6 +878,8 @@ protected:
 	// Must be ordered since array is in a specific order.
 	std::map<SetBindingPair, std::pair<uint32_t, uint32_t>> buffers_requiring_dynamic_offset;
 
+	SmallVector<uint32_t> disabled_frag_outputs;
+
 	std::unordered_set<SetBindingPair, InternalHasher> inline_uniform_blocks;
 
 	uint32_t argument_buffer_ids[kMaxArgumentBuffers];
@@ -878,6 +897,8 @@ protected:
 	void add_spv_func_and_recompile(SPVFuncImpl spv_func);
 
 	void activate_argument_buffer_resources();
+
+	bool type_is_msl_framebuffer_fetch(const SPIRType &type) const;
 
 	// OpcodeHandler that handles several MSL preprocessing operations.
 	struct OpCodePreprocessor : OpcodeHandler
