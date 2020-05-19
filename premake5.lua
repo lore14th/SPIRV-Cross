@@ -1,6 +1,6 @@
 project "SPIRV-Cross"
 	kind "StaticLib"
-	language "C"
+    language "C++"
 	staticruntime "on"
 	
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
