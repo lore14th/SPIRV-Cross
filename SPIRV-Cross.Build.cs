@@ -1,36 +1,27 @@
-// SPIRV-Cross Tinfoil build script
+// Tinfoil Engine build script
 
 using Sharpmake;
-using System;
 using System.IO;
-using System.Collections.Generic;
+using TinfoilBuildTool;
 
-[Sharpmake.Generate]
-public class SpirvCross : TinfoilProjectBase
+[BuildModule(typeof(TinfoilProject))]
+public class SPIRV_Cross : TinfoilThirdPartyModuleDependency
 {
-	public SpirvCross()
+	public SPIRV_Cross(ReadOnlyModuleRules rules) : base(rules)
 	{
-		Name = "SPIRV-Cross";
-		SourceFiles.Add("SPIRV-Cross.Build.cs");
 	}
 
-	public override void ConfigureProject(Project.Configuration config, TinfoilTarget target)
+	public override void ConfigureBuild(Project.Configuration config, ITarget target)
 	{
-		config.Output = Configuration.OutputType.Lib;
-		
-		config.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
-		config.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
-		config.Options.Add(Options.Vc.Compiler.RTTI.Enable);
-		config.Options.Add(Options.Vc.General.WindowsTargetPlatformVersion.Latest);
-		config.Options.Add(Options.Vc.Librarian.TreatLibWarningAsErrors.Enable);
+		base.ConfigureBuild(config, target);
+
+		config.IncludePaths.Add("[project.SharpmakeCsPath]");
 
 		// C4065: switch without case labels
 		config.Options.Add(new Options.Vc.Compiler.DisableSpecificWarnings("4065"));
 
-		config.IncludePaths.Add(@"");
-
-		ExcludeFolder(config, target, "samples");
-		ExcludeFolder(config, target, "shaders-other");
-		ExcludeFolder(config, target, "tests-other");
+		config.SourceFilesBuildExclude.AddRange(Directory.EnumerateFiles(Path.Combine(RootDirectory, "samples"), "*", SearchOption.AllDirectories));
+		config.SourceFilesBuildExclude.AddRange(Directory.EnumerateFiles(Path.Combine(RootDirectory, "shaders-other"), "*", SearchOption.AllDirectories));
+		config.SourceFilesBuildExclude.AddRange(Directory.EnumerateFiles(Path.Combine(RootDirectory, "tests-other"), "*", SearchOption.AllDirectories));
 	}
 }
